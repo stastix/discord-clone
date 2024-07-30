@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @unique
+  name      String
+  imageUrl  String
+  email     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  server    server[]
+  Member    Member[]
+  channel   channel[]
+}
+
+model User {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String
+}
+
+model server {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  imageUrl   String
+  inviteCode String
+  profileId  String
+  profile    Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Member     Member[]
+  channel    channel[]
+}
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  GUEST
+}
+
+model Member {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  role      MemberRole @default(GUEST)
+  profile   Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String     @db.ObjectId
+  server    server     @relation(fields: [serverId], references: [id])
+  serverId  String     @db.ObjectId
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+enum ChannelType {
+  TEXT
+  AUDIO
+  VIDEO
+}
+
+model channel {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  type      ChannelType
+  profile   Profile     @relation(fields: [profileId], references: [id])
+  profileId String      @db.ObjectId
+  server    server      @relation(fields: [serverId], references: [id])
+  serverId  String      @db.ObjectId
+}
